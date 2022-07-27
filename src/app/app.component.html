@@ -1,3 +1,18 @@
-<app-navbar></app-navbar>
+<app-navbar [(menuCollapse)]="appMenuCollapse"></app-navbar>
+<!-- <p>{{appMenuCollapse}}</p> -->
+<div class="sm:max-w-7xl max-w-md mx-auto flex">
+    <div class="hidden sm:block">
+        <div class="my-4 mx-4">
+            <app-menu-bar></app-menu-bar>
+        </div>
+    </div>
 
-<router-outlet></router-outlet>
+    <div *ngIf="appMenuCollapse" class="sm:hidden absolute left-0">
+        <app-menu-bar></app-menu-bar>
+    </div>
+    <!-- <p>test</p> -->
+    <div class="my-4 mx-4 flex-auto">
+        <router-outlet></router-outlet>
+    </div>
+
+</div>
