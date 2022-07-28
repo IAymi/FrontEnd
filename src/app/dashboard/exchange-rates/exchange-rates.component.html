@@ -1,8 +1,13 @@
-<div class="my-4 bg-gray-50 rounded">
-    <p>exchange-rates works!</p>
-    <p>exchange-rates works!</p>
-    <p>exchange-rates works!</p>
-    <p>exchange-rates works!</p>
-    <p>exchange-rates works!</p>
-    <p>{{startDate.toISOString()}}</p>
+<div class="my-4 bg-gray-50 rounded flex flex-col text-center">
+
+    <div class="p-5 flex-col">
+        <p class="font-bold">USD to THB Graph</p>
+        <p class="text-sm">1 USD : {{avgRate.toFixed(2)}} THB</p>
+        <div class="w-11/12 max-w-xl mx-auto h-96">
+            <canvas id="graph" class=""></canvas>
+        </div>
+    </div>
+
+
+
 </div>

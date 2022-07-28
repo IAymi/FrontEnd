@@ -1,5 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { HttpClient } from '@angular/common/http'
+import { of,map,tap } from 'rxjs';
+import { Chart, registerables } from 'chart.js';
+Chart.register(...registerables);
 
 interface Res {
   success: boolean;
@@ -10,38 +13,10 @@ interface Res {
   rates: Object;
 }
 
-// interface Rates {
-//   '2022-07-01': _20220701;
-//   '2022-07-02': _20220701;
-//   '2022-07-03': _20220701;
-//   '2022-07-04': _20220701;
-//   '2022-07-05': _20220701;
-//   '2022-07-06': _20220701;
-//   '2022-07-07': _20220701;
-//   '2022-07-08': _20220701;
-//   '2022-07-09': _20220701;
-//   '2022-07-10': _20220701;
-//   '2022-07-11': _20220701;
-//   '2022-07-12': _20220701;
-//   '2022-07-13': _20220701;
-//   '2022-07-14': _20220701;
-//   '2022-07-15': _20220701;
-//   '2022-07-16': _20220701;
-//   '2022-07-17': _20220701;
-//   '2022-07-18': _20220701;
-//   '2022-07-19': _20220701;
-//   '2022-07-20': _20220701;
-//   '2022-07-21': _20220701;
-//   '2022-07-22': _20220701;
-//   '2022-07-23': _20220701;
-//   '2022-07-24': _20220701;
-//   '2022-07-25': _20220701;
-//   '2022-07-26': _20220701;
-// }
-
-// interface _20220701 {
-//   THB: number;
-// }
+interface Rate {
+  date:string;
+  valueCur:number
+}
 
 @Component({
   selector: 'app-exchange-rates',
@@ -55,46 +30,106 @@ export class ExchangeRatesComponent implements OnInit {
 
   constructor(private http:HttpClient) {}
   
-  startDate = new Date(Date.now())
-  endDate = new Date(Date.now())
-  startDateString:string = ""
-  endDateString:string = ""
   apiKey:string = "GtGVbhwIzcuVJ9sIv2KZBhmPbW3b8TrQ"
   symbol:string = "THB"
   base:string = "USD"
-  apiUrl:string = ""
 
-  data:Res = {
-    success: false,
-    timeseries: false,
-    start_date: '',
-    end_date: '',
-    base: '',
-    rates: {}
-  }
 
   ngOnInit(): void {
-    this.findDate()
-    setTimeout(()=>{
-      this.getData()
-    },3000) 
+    of(1).pipe(map((v)=>{
+      let startDate = new Date(Date.now())
+      let endDate = new Date(Date.now())
+      startDate.setDate(startDate.getDate()-8)
+      endDate.setDate(endDate.getDate()-1)
+      let startDateStr = startDate.toISOString().slice(0,10)
+      let endDateStr = endDate.toISOString().slice(0,10)
+
+      // console.log(startDateStr,endDateStr)
+
+      let apiUrl = `https://api.apilayer.com/exchangerates_data/timeseries?start_date=${startDateStr}&end_date=${endDateStr}&symbols=${this.symbol}&base=${this.base}&apikey=${this.apiKey}`
+      return apiUrl
+    }),
+    map((apiurl)=>{
+      this.http.get<Res>(apiurl).pipe(
+        map((res)=>{
+          console.log(res)
+          return this.displayRate(res.rates)
+        })
+        ,map((res)=>{
+          for(let i of res){
+            this.avgRate += (i.valueCur/8)
+          }
+          return this.diffRate(res)
+        })
+        ,tap((res)=>this.createGraph(res))
+        ).subscribe()
+    })
+    ).subscribe()
   }
 
-  findDate(){
-    this.startDate.setDate(this.startDate.getDate()-8)
-    this.endDate.setDate(this.endDate.getDate()-1)
-    // console.log(this.startDate)
-    // console.log(this.endDate)
-    this.startDateString = this.startDate.toISOString().slice(0,10)
-    this.endDateString = this.endDate.toISOString().slice(0,10)
-    console.log(this.startDateString,this.endDateString)
-    this.apiUrl = `https://api.apilayer.com/exchangerates_data/timeseries?start_date=${this.startDateString}&end_date=${this.endDateString}&symbols=${this.symbol}&base=${this.base}&apikey=${this.apiKey}`
+  avgRate:number=0
+
+  displayRate(rates:Object){
+    let ratesList:Rate[] = []
+    for (const [key, value] of Object.entries(rates)){
+      let rate:Rate = {
+        date: '',
+        valueCur: 0
+      }
+      for (const [k, v] of Object.entries(value)){
+        rate.date = key
+        if(typeof(v)==="number"){
+          rate.valueCur = v
+        }
+      }
+      ratesList.push(rate)
+    }
+    return ratesList
   }
 
-  getData(){
-    this.http.get<Res>(this.apiUrl).subscribe((res)=>{
-      this.data = res
-      console.log(this.data)
+
+  diffRate(ratesList:Rate[]){
+    let ratesDiffList:Rate[] = []
+    for(let i = 1;i<ratesList.length;i++){
+      let diffRate:Rate = {
+        date: '',
+        valueCur: 0
+      }
+      diffRate.date = ratesList[i].date
+      diffRate.valueCur = ratesList[i].valueCur - ratesList[i-1].valueCur
+      ratesDiffList.push(diffRate)
+    }
+    return ratesDiffList
+  }
+
+  createGraph(ratesDiffList:Rate[]){
+    const chart = new Chart("graph",{
+      type:'bar',
+      data:{
+        labels: ratesDiffList.map(diffRate => diffRate.date),
+        datasets:[{
+          label:'THB Change',
+          data: ratesDiffList.map(diffRate => diffRate.valueCur),
+          backgroundColor:'rgba(255, 99, 132)',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x:{
+            grid:{
+              display:false
+            }
+          },
+          y: {
+            grid:{
+              display:false
+            },
+            beginAtZero: false
+          }
+        }
+      }
     })
   }
 
