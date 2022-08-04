@@ -49,21 +49,21 @@ export class ExchangeRatesComponent implements OnInit {
       let apiUrl = `https://api.apilayer.com/exchangerates_data/timeseries?start_date=${startDateStr}&end_date=${endDateStr}&symbols=${this.symbol}&base=${this.base}&apikey=${this.apiKey}`
       return apiUrl
     }),
-    map((apiurl)=>{
-      this.http.get<Res>(apiurl).pipe(
-        map((res)=>{
-          console.log(res)
-          return this.displayRate(res.rates)
-        })
-        ,map((res)=>{
-          for(let i of res){
-            this.avgRate += (i.valueCur/8)
-          }
-          return this.diffRate(res)
-        })
-        ,tap((res)=>this.createGraph(res))
-        ).subscribe()
-    })
+    // map((apiurl)=>{
+    //   this.http.get<Res>(apiurl).pipe(
+    //     map((res)=>{
+    //       console.log(res)
+    //       return this.displayRate(res.rates)
+    //     })
+    //     ,map((res)=>{
+    //       for(let i of res){
+    //         this.avgRate += (i.valueCur/8)
+    //       }
+    //       return this.diffRate(res)
+    //     })
+    //     ,tap((res)=>this.createGraph(res))
+    //     ).subscribe()
+    // })
     ).subscribe()
   }
 

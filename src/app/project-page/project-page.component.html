@@ -1,1 +1,20 @@
-<p>project-page works!</p>
+<div class="text-center py-20">
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div *ngFor="let oneData of data" class="rounded bg-gray-100 overflow-hidden">
+            <div class="h-1/2">
+                <img src="{{oneData.image}}" class="object-cover w-full h-full" alt="">
+            </div>
+
+
+
+            <div class="text-3xl sm:text-xl lg:text-lg font-bold">{{oneData.name}}</div>
+            <div class="break-words">{{oneData.detail}}</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="py-4">
+    <app-add-project></app-add-project>
+</div>
